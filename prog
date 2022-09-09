@@ -1,0 +1,44 @@
+library(maptools)
+library(rgdal)
+library(rgeos)
+library(ggplot2)
+library(mapproj)
+library(ggmap)
+library(dplyr)
+library(plyr)
+
+municipios <- readOGR('SP_Setores_2020.shp')
+
+osasco<-municipios[municipios$CD_MUN == "3534401",]
+
+ggmap(osasco)
+
+osasco@data$id <- rownames(osasco@data)
+mapa.points <- fortify(osasco,region = "id")
+
+mapa.osasco <- inner_join(mapa.points,osasco@data,by = "id")
+
+View(mapa.osasco)
+
+library(utils)
+unidades <- read.csv("unidade.csv", header = TRUE, sep = ";",
+         dec = ",")
+
+pal <- colorRampPalette(c("cadetblue1", "cadetblue2", "cadetblue3"))(1459)
+mapa <- ggplot(mapa.osasco,inherit.aes = FALSE) + 
+  aes(long,lat,group=group, fill = CD_SETOR) + 
+  geom_polygon()+ 
+  geom_point(unidades, mapping = aes(x = lon, y = lat, size = 1, shape = "1", color = "red"),inherit.aes = FALSE)+
+  coord_equal()+
+  scale_fill_manual(values = pal)+
+  theme(legend.position="none") 
+mapa
+
+unidades_novas <- read.csv("unidade_nova.csv", header = TRUE, sep = ";",
+                           dec = ",")
+unidades_novas
+
+mapa_novas <- mapa + 
+  geom_point(unidades_novas, mapping = aes(x = lon, y = lat, size = 1, shape = "5", color = "green"),inherit.aes = FALSE)
+mapa_novas  
+
